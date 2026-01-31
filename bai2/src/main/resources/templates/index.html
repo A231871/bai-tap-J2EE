@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management</title>
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 800px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="text-center mb-4">Book Management System</h2>
+
+    <!-- Form to Add/Update Book -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title" id="formTitle">Add New Book</h5>
+            <form id="bookForm">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <input type="number" id="bookId" class="form-control" placeholder="ID" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="title" class="form-control" placeholder="Title" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="author" class="form-control" placeholder="Author" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100" id="submitBtn">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table to Display Books -->
+    <table class="table table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="bookTableBody">
+        <!-- Data will be injected here by JavaScript -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = '/api/books';
+    let isEditMode = false;
+
+    // 1. Fetch and display all books
+    async function loadBooks() {
+        const response = await fetch(API_URL);
+        const books = await response.json();
+        const tableBody = document.getElementById('bookTableBody');
+        tableBody.innerHTML = '';
+
+        books.forEach(book => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${book.id}</td>
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editBook(${book.id}, '${book.title}', '${book.author}')">Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBook(${book.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 2. Add or Update a book
+    document.getElementById('bookForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('bookId').value;
+        const bookData = {
+            id: parseInt(id),
+            title: document.getElementById('title').value,
+            author: document.getElementById('author').value
+        };
+
+        if (isEditMode) {
+            // Update (PUT)
+            await fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookData)
+            });
+            isEditMode = false;
+            document.getElementById('submitBtn').innerText = 'Add';
+            document.getElementById('bookId').disabled = false;
+        } else {
+            // Add (POST)
+            await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookData)
+            });
+        }
+
+        document.getElementById('bookForm').reset();
+        loadBooks();
+    });
+
+    // 3. Delete a book
+    async function deleteBook(id) {
+        if (confirm('Are you sure you want to delete this book?')) {
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            loadBooks();
+        }
+    }
+
+    // 4. Fill form for editing
+    function editBook(id, title, author) {
+        document.getElementById('bookId').value = id;
+        document.getElementById('bookId').disabled = true; // ID shouldn't be changed during update
+        document.getElementById('title').value = title;
+        document.getElementById('author').value = author;
+
+        document.getElementById('submitBtn').innerText = 'Update';
+        document.getElementById('formTitle').innerText = 'Edit Book';
+        isEditMode = true;
+    }
+
+    // Initial Load
+    loadBooks();
+</script>
+
+</body>
+</html>

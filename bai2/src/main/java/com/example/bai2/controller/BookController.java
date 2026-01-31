@@ -5,12 +5,16 @@ import com.example.bai2.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/books") // Base URL defined in Image 6
 public class BookController {
-
+    @GetMapping("/books")
+    public List<Book> getBooks(){
+        return Arrays.asList(new Book(2025, "J2EE", "Huy chuong"));
+    }
     @Autowired // Automatically injects the BookService
     private BookService bookService;
 
